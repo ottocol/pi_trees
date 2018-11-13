@@ -5,8 +5,6 @@ from random import random, shuffle
 
 import os
 
-import pygraphviz as pgv
-
 from time import sleep
 
 class TaskStatus(object):
@@ -987,69 +985,3 @@ def print_phpsyntax_tree(tree):
         if c.children != []:
             print_phpsyntax_tree(c),
         print "]",
-    
-def print_dot_tree(root, dotfilepath=None):
-    """
-        Print an output compatible with the DOT synatax and Graphiz
-    """
-    gr = pgv.AGraph(strict=True, directed=True, rotate='0', bgcolor='white', ordering="out")
-    gr.node_attr['fontsize'] = '9'
-    gr.node_attr['color'] = 'black'
-    
-    if dotfilepath is None:
-        dotfilepath = os.path.expanduser('~') + '/.ros/tree.dot'
-    
-    global last_dot_tree
-    
-    # Add the root node
-    gr.add_node(root.name)
-    node = gr.get_node(root.name)
-    
-    if root.status == TaskStatus.RUNNING:
-        node.attr['fillcolor'] = 'yellow'
-        node.attr['style'] = 'filled'
-        node.attr['border'] = 'bold'
-    elif root.status == TaskStatus.SUCCESS:
-        node.attr['color'] = 'green'
-    elif root.status == TaskStatus.FAILURE:
-        node.attr['color'] = 'red'
-    else:
-        node.attr['color'] = 'black'
-                 
-    def add_edges(root):
-        for c in root.children:
-            if isinstance(c, (Sequence, Iterator, RandomSequence, RandomIterator, WeightedRandomSequence, WeightedRandomIterator)):
-                gr.add_node(c.name, shape="cds")
-            elif isinstance(c, (Selector, RandomSelector, WeightedRandomSelector)):
-                gr.add_node(c.name, shape="diamond")
-            elif isinstance(c, (ParallelOne, ParallelAll)):
-                gr.add_node(c.name, shape="parallelogram")
-            elif isinstance(c, Invert):
-                gr.add_node(c.name, shape="house")
-            else:
-                gr.add_node(c.name)
-                
-            gr.add_edge((root.name, c.name))
-            node = gr.get_node(c.name)
-
-            if c.status == TaskStatus.RUNNING:
-                node.attr['fillcolor'] = 'yellow'
-                node.attr['style'] = 'filled'
-                node.attr['border'] = 'bold'
-            elif c.status == TaskStatus.SUCCESS:
-                node.attr['color'] = 'green'
-            elif c.status == TaskStatus.FAILURE:
-                node.attr['color'] = 'red'
-            else:
-                node.attr['color'] = 'black'
-
-            if c.children != []:
-                add_edges(c)
-
-    add_edges(root)
-    
-    current_dot_tree = gr.string()
-        
-    if current_dot_tree != last_dot_tree:
-        gr.write(dotfilepath)
-        last_dot_tree = gr.string()
